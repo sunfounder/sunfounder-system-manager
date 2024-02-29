@@ -164,21 +164,15 @@ def _get_ips():
 
 def get_ips():
     ips = None
-    print("======== Get IP ========")
     if ha_api.is_homeassistant_addon():
-        print("is homeassistant addon")
         ips = ha_api.get_ips()
     else:
-        print("not homeassistant addon")
         ips = _get_ips()
-    print(f"got ips: ", ips)
 
     result = {}
     for key in ips:
         if ips[key] != '' and ips[key] != None:
             result[key] = ips[key]
-    print(f"result: ", result)
-    print("========== END ==========")
             
     return result
 

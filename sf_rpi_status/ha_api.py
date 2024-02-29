@@ -6,7 +6,6 @@ token = None
 headers = None
 
 def is_homeassistant_addon():
-    print(os.environ)
     return 'SUPERVISOR_TOKEN' in os.environ
 
 def init():
