@@ -171,11 +171,12 @@ def get_ips():
     else:
         ips = _get_ips()
 
+    result = {}
     for key in ips:
-        if ips[key] == '' or ips[key] == None:
-            ips = ips.pop(key)
+        if ips[key] != '' and ips[key] != None:
+            result[key] = ips[key]
             
-    return ips
+    return result
 
 
 def get_macs():
