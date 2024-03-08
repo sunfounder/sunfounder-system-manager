@@ -262,3 +262,9 @@ def get_network_speed():
     net_io_counter_time = current_net_io_counter_time
 
     return network_speed
+
+def shutdown():
+    if ha_api.is_homeassistant_addon():
+        ha_api.shutdown()
+    else:
+        os.system('sudo shutdown -h now')

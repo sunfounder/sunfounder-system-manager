@@ -14,12 +14,13 @@ SunFounder Raspberry Pi Status is a tool to get the status of your Raspberry Pi.
 ```bash
 # Install development dependencies
 apt-get -y install python3 python3-pip python3-venv git
+# Create a virtual environment
+python3 -m venv venv
+# Install build
 pip3 install build
 
 # Clone the repository
 git clone https://github.com/sunfounder/sf_rpi_status.git
-# Create a virtual environment
-python3 -m venv venv
 # Activate the virtual environment
 source venv/bin/activate
 # build the package

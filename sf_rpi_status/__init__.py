@@ -12,6 +12,7 @@ from .status import \
     get_macs, \
     get_network_connection_type, \
     get_network_speed, \
+    shutdown, \
     CPUFreq, \
     NetworkSpeed, \
     MemoryInfo, \
