@@ -82,6 +82,9 @@ class DiskInfo:
         self._used = used
         self._free = free
         self._percent = percent
+    
+    def __repr__(self):
+        return f'DiskInfo(total: {self.total} B, used: {self.used} B, free: {self.free} B, percent: {self.percent}%)'
 
     def __str__(self):
         return f'DiskInfo(total: {self.total} B, used: {self.used} B, free: {self.free} B, percent: {self.percent}%)'
@@ -135,6 +138,7 @@ def get_disks_info():
                     used += usage.used
                     free += usage.free
             percent = used / total * 100
+            percent = round(percent, 2)
             disk_info[disk] = DiskInfo(total, used, free, percent)
         except Exception as e:
             print(f"Failed to get disk information for {disk}: {str(e)}")
