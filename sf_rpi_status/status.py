@@ -18,6 +18,9 @@ class CPUFreq:
         self._min = data.min
         self._max = data.max
 
+    def __repr__(self):
+        return f'CPUFreq(current: {self.current} MHz, min: {self.min} MHz, max: {self.max} MHz)'
+
     def __str__(self):
         return f'CPUFreq(current: {self.current} MHz, min: {self.min} MHz, max: {self.max} MHz)'
 
@@ -48,6 +51,9 @@ class MemoryInfo:
         self._percent = data.percent
         self._used = data.used
         self._free = data.free
+
+    def __repr__(self):
+        return f'MemoryInfo(total: {self.total} B, available: {self.available} B, percent: {self.percent}%, used: {self.used} B, free: {self.free} B)'
 
     def __str__(self):
         return f'MemoryInfo(total: {self.total} B, available: {self.available} B, percent: {self.percent}%, used: {self.used} B, free: {self.free} B)'
