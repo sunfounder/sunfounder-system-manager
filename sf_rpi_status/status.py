@@ -134,8 +134,7 @@ def get_disks_info():
                     total += usage.total
                     used += usage.used
                     free += usage.free
-                    percent = max(percent, usage.percent)
-            
+            percent = used / total * 100
             disk_info[disk] = DiskInfo(total, used, free, percent)
         except Exception as e:
             print(f"Failed to get disk information for {disk}: {str(e)}")
