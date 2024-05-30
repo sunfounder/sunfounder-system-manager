@@ -3,6 +3,7 @@ import os
 import subprocess
 
 from . import ha_api
+# import ha_api # for debugging
 
 def get_cpu_temperature():
     from psutil import sensors_temperatures
@@ -111,10 +112,11 @@ class DiskInfo:
     def percent(self):
         return self._percent
 
-def get_disk_info():
+def get_disk_info(mountpoint='/'):
     from psutil import disk_usage
-    disk_info = disk_usage('/')
+    disk_info = disk_usage(mountpoint)
     return DiskInfo(disk_info.total, disk_info.used, disk_info.free, disk_info.percent)
+
 
 def get_disks_info():
     from psutil import disk_partitions, disk_usage
@@ -127,48 +129,55 @@ def get_disks_info():
         if disk_type == "disk":
             disks.append(disk_name)
     
+    
     disk_info = {}
     
     for disk in disks:
+        mountpoints = subprocess.check_output(f"lsblk -o NAME,TYPE,MOUNTPOINTS -n -l |grep {disk}|grep part|awk '{{print $3}}'", shell=True).decode().strip().split('\n')
+        
+        # print(f"disk: {disk}")
+        # print(f"mountpoints: {mountpoints}")
+
         try:
-            partitions = disk_partitions(all=True)
             total = 0
             used = 0
             free = 0
             percent = 0
-            
-            for partition in partitions:
-                if partition.device.startswith("/dev/" + disk):
-                    usage = disk_usage(partition.mountpoint)
-                    total += usage.total
-                    used += usage.used
-                    free += usage.free
+            for mountpoint in mountpoints:
+                usage = disk_usage(mountpoint)
+                total += usage.total
+                used += usage.used
+                free += usage.free
             percent = used / total * 100
             percent = round(percent, 2)
             disk_info[disk] = DiskInfo(total, used, free, percent)
         except Exception as e:
             print(f"Failed to get disk information for {disk}: {str(e)}")
     
+    # print(disk_info)
     return disk_info
 
 def get_boot_time():
     from psutil import boot_time
     return boot_time()
 
-# IP address
+
 def _get_ips():
+    import psutil
     IPs = {}
-    NIC_devices = []
-    NIC_devices = os.listdir('/sys/class/net/')
 
-    for NIC in NIC_devices:
-        if NIC == 'lo':
-            continue
-        try:
-            IPs[NIC] = subprocess.check_output('ifconfig ' + NIC + ' | grep "inet " | awk \'{print $2}\'', shell=True).decode().strip('\n')
-        except:
-            continue
-
+    try:
+        NIC_devices = psutil.net_if_addrs()
+        for name, NIC in NIC_devices.items():
+            if name == 'lo':
+                continue
+            try:
+                IPs[name] = NIC[0].address
+            except:
+                continue
+    except Exception as e:
+        print(f"Failed to get ips: {str(e)}")
+    
     return IPs
 
 def get_ips():
@@ -182,9 +191,8 @@ def get_ips():
     for key in ips:
         if ips[key] != '' and ips[key] != None:
             result[key] = ips[key]
-            
-    return result
 
+    return result
 
 def get_macs():
     MACs = {}
