@@ -65,3 +65,7 @@ def get_network_connection_type():
 def shutdown():
     '''shutdown homeassistant host'''
     set("host/shutdown")
+
+def reboot():
+    '''reboot homeassistant host'''
+    set("host/reboot")
