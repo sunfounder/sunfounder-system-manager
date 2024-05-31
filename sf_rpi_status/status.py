@@ -73,7 +73,7 @@ class MemoryInfo:
     
     @property
     def used(self):
-        return self._used
+        return self._total-self._available
     
     @property
     def free(self):
