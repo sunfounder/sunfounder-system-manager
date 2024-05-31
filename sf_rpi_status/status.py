@@ -164,6 +164,7 @@ def get_boot_time():
 
 def _get_ips():
     import psutil
+    import socket
     IPs = {}
 
     try:
@@ -172,7 +173,10 @@ def _get_ips():
             if name == 'lo':
                 continue
             try:
-                IPs[name] = NIC[0].address
+                for af in NIC:
+                    print(af.family)
+                    if af.family == socket.AF_INET: # 2:'IPV4'
+                        IPs[name] = af.address
             except:
                 continue
     except Exception as e:
