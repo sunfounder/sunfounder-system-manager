@@ -174,7 +174,6 @@ def _get_ips():
                 continue
             try:
                 for af in NIC:
-                    print(af.family)
                     if af.family == socket.AF_INET: # 2:'IPV4'
                         IPs[name] = af.address
             except:
