@@ -119,7 +119,7 @@ def get_disk_info(mountpoint='/'):
 
 
 def get_disks_info():
-    from psutil import disk_partitions, disk_usage
+    from psutil import disk_usage
     import subprocess
     disks = []
     output = subprocess.check_output(["lsblk", "-o", "NAME,TYPE", "-n", "-l"]).decode().strip().split('\n')
@@ -129,32 +129,31 @@ def get_disks_info():
         if disk_type == "disk":
             disks.append(disk_name)
     
-    
     disk_info = {}
     
     for disk in disks:
         mountpoints = subprocess.check_output(f"lsblk -o NAME,TYPE,MOUNTPOINTS -n -l |grep {disk}|grep part|awk '{{print $3}}'", shell=True).decode().strip().split('\n')
         
-        # print(f"disk: {disk}")
-        # print(f"mountpoints: {mountpoints}")
-
         try:
             total = 0
             used = 0
             free = 0
             percent = 0
             for mountpoint in mountpoints:
+                if mountpoint == '':
+                    continue
                 usage = disk_usage(mountpoint)
                 total += usage.total
                 used += usage.used
                 free += usage.free
+            if total == 0:
+                continue
             percent = used / total * 100
             percent = round(percent, 2)
             disk_info[disk] = DiskInfo(total, used, free, percent)
         except Exception as e:
             print(f"Failed to get disk information for {disk}: {str(e)}")
     
-    # print(disk_info)
     return disk_info
 
 def get_boot_time():
