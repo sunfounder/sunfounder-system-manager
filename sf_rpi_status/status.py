@@ -117,9 +117,7 @@ def get_disk_info(mountpoint='/'):
     disk_info = disk_usage(mountpoint)
     return DiskInfo(disk_info.total, disk_info.used, disk_info.free, disk_info.percent)
 
-
-def get_disks_info():
-    from psutil import disk_usage
+def get_disks():
     import subprocess
     disks = []
     output = subprocess.check_output(["lsblk", "-o", "NAME,TYPE", "-n", "-l"]).decode().strip().split('\n')
@@ -128,8 +126,14 @@ def get_disks_info():
         disk_name, disk_type = line.split()
         if disk_type == "disk":
             disks.append(disk_name)
-    
+    return disks
+
+
+def get_disks_info():
+    from psutil import disk_usage
+    import subprocess
     disk_info = {}
+    disks = get_disks()
     
     for disk in disks:
         mountpoints = subprocess.check_output(f"lsblk -o NAME,TYPE,MOUNTPOINTS -n -l |grep {disk}|grep part|awk '{{print $3}}'", shell=True).decode().strip().split('\n')
@@ -159,7 +163,6 @@ def get_disks_info():
 def get_boot_time():
     from psutil import boot_time
     return boot_time()
-
 
 def _get_ips():
     import psutil
