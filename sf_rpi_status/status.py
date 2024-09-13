@@ -1,9 +1,4 @@
 
-import os
-import subprocess
-
-from . import ha_api
-# import ha_api # for debugging
 
 def get_cpu_temperature():
     from psutil import sensors_temperatures
@@ -84,17 +79,23 @@ def get_memory_info():
     return MemoryInfo(virtual_memory())
 
 class DiskInfo:
-    def __init__(self, total, used, free, percent):
+    def __init__(self, total=None, used=None, free=None, percent=None, path=None, mounted=False):
         self._total = total
         self._used = used
         self._free = free
         self._percent = percent
+        self._path = path
+        self._mounted = mounted
     
     def __repr__(self):
-        return f'DiskInfo(total: {self.total} B, used: {self.used} B, free: {self.free} B, percent: {self.percent}%)'
+        return self.__str__()
 
     def __str__(self):
-        return f'DiskInfo(total: {self.total} B, used: {self.used} B, free: {self.free} B, percent: {self.percent}%)'
+        from psutil._common import bytes2human
+        if self.mounted:
+            return f'Disk {self._path}: total: {bytes2human(self.total)}B, used: {bytes2human(self.used)}B, free: {bytes2human(self.free)}B, percent: {self.percent}%'
+        else:
+            return f'Disk {self._path} not mounted, total: {bytes2human(self.total)}B'
 
     @property
     def total(self):
@@ -112,10 +113,25 @@ class DiskInfo:
     def percent(self):
         return self._percent
 
+    @property
+    def path(self):
+        return self._path
+    
+    @property
+    def mounted(self):
+        return self._mounted
+
 def get_disk_info(mountpoint='/'):
     from psutil import disk_usage
     disk_info = disk_usage(mountpoint)
-    return DiskInfo(disk_info.total, disk_info.used, disk_info.free, disk_info.percent)
+    return DiskInfo(
+        total=disk_info.total,
+        used=disk_info.used,
+        free=disk_info.free,
+        percent=disk_info.percent,
+        path='total',
+        mounted=True,
+    )
 
 def get_disks():
     import subprocess
@@ -128,6 +144,12 @@ def get_disks():
             disks.append(disk_name)
     return disks
 
+def get_disk_total(disk):
+    import subprocess
+    from .utils import human2bytes
+    total = subprocess.check_output(f"lsblk -o NAME,TYPE,SIZE -n -l | grep {disk} | grep disk | awk '{{print $3}}'", shell=True).decode().strip()
+    total = human2bytes(total)
+    return total
 
 def get_disks_info():
     from psutil import disk_usage
@@ -143,18 +165,33 @@ def get_disks_info():
             used = 0
             free = 0
             percent = 0
-            for mountpoint in mountpoints:
-                if mountpoint == '':
+            if len(mountpoints) == 0 or mountpoints[0] == '':
+                total = get_disk_total(disk)
+                disk_info[disk] = DiskInfo(
+                    total=total,
+                    path=disk,
+                    mounted=False
+                )
+            else:
+                for mountpoint in mountpoints:
+                    if mountpoint == '':
+                        continue
+                    usage = disk_usage(mountpoint)
+                    total += usage.total
+                    used += usage.used
+                    free += usage.free
+                if total == 0:
                     continue
-                usage = disk_usage(mountpoint)
-                total += usage.total
-                used += usage.used
-                free += usage.free
-            if total == 0:
-                continue
-            percent = used / total * 100
-            percent = round(percent, 2)
-            disk_info[disk] = DiskInfo(total, used, free, percent)
+                percent = used / total * 100
+                percent = round(percent, 2)
+                disk_info[disk] = DiskInfo(
+                    total=total,
+                    used=used,
+                    free=free,
+                    percent=percent,
+                    path=disk,
+                    mounted=True
+                )
         except Exception as e:
             print(f"Failed to get disk information for {disk}: {str(e)}")
     
@@ -186,6 +223,7 @@ def _get_ips():
     return IPs
 
 def get_ips():
+    from . import ha_api
     ips = None
     if ha_api.is_homeassistant_addon():
         ips = ha_api.get_ips()
@@ -200,9 +238,10 @@ def get_ips():
     return result
 
 def get_macs():
+    from os import listdir
     MACs = {}
     NIC_devices = []
-    NIC_devices = os.listdir('/sys/class/net/')
+    NIC_devices = listdir('/sys/class/net/')
     for NIC in NIC_devices:
         if NIC == 'lo':
             continue
@@ -286,7 +325,9 @@ def get_network_speed():
     return network_speed
 
 def shutdown():
+    from . import ha_api
     if ha_api.is_homeassistant_addon():
         ha_api.shutdown()
     else:
-        os.system('sudo shutdown -h now')
+        from os import system
+        system('sudo shutdown -h now')
