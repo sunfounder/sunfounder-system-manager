@@ -79,7 +79,7 @@ def get_memory_info():
     return MemoryInfo(virtual_memory())
 
 class DiskInfo:
-    def __init__(self, total=None, used=None, free=None, percent=None, path=None, mounted=False):
+    def __init__(self, total=0, used=0, free=0, percent=0, path=None, mounted=False):
         self._total = total
         self._used = used
         self._free = free
