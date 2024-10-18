@@ -79,7 +79,7 @@ def get_memory_info():
     return MemoryInfo(virtual_memory())
 
 class DiskInfo:
-    def __init__(self, total=0, used=0, free=0, percent=0, path=None, mounted=False):
+    def __init__(self, total=0.0, used=0.0, free=0.0, percent=0.0, path=None, mounted=False):
         self._total = total
         self._used = used
         self._free = free
@@ -161,10 +161,10 @@ def get_disks_info():
         mountpoints = subprocess.check_output(f"lsblk -o NAME,TYPE,MOUNTPOINTS -n -l |grep {disk}|grep part|awk '{{print $3}}'", shell=True).decode().strip().split('\n')
         
         try:
-            total = 0
-            used = 0
-            free = 0
-            percent = 0
+            total = 0.0
+            used = 0.0
+            free = 0.0
+            percent = 0.0
             if len(mountpoints) == 0 or mountpoints[0] == '':
                 total = get_disk_total(disk)
                 disk_info[disk] = DiskInfo(
@@ -180,7 +180,7 @@ def get_disks_info():
                     total += usage.total
                     used += usage.used
                     free += usage.free
-                if total == 0:
+                if total == 0.0:
                     continue
                 percent = used / total * 100
                 percent = round(percent, 2)
