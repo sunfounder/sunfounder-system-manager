@@ -79,23 +79,28 @@ def get_memory_info():
     return MemoryInfo(virtual_memory())
 
 class DiskInfo:
-    def __init__(self, total=0.0, used=0.0, free=0.0, percent=0.0, path=None, mounted=False):
+    def __init__(self, total=0.0, used=0.0, free=0.0, percent=0.0, temperature=None, path=None, mounted=False):
         self._total = total
         self._used = used
         self._free = free
         self._percent = percent
         self._path = path
         self._mounted = mounted
+        self._temperature = temperature
     
     def __repr__(self):
         return self.__str__()
 
     def __str__(self):
         from psutil._common import bytes2human
+        string = ""
         if self.mounted:
-            return f'Disk {self._path}: total: {bytes2human(self.total)}B, used: {bytes2human(self.used)}B, free: {bytes2human(self.free)}B, percent: {self.percent}%'
+            string = f'Disk {self._path}: total: {bytes2human(self.total)}B, used: {bytes2human(self.used)}B, free: {bytes2human(self.free)}B, percent: {self.percent}%'
         else:
-            return f'Disk {self._path} not mounted, total: {bytes2human(self.total)}B'
+            string = f'Disk {self._path} not mounted, total: {bytes2human(self.total)}B'
+        if self.temperature is not None:
+            string += f', temperature: {self.temperature}°C'
+        return string
 
     @property
     def total(self):
@@ -121,6 +126,11 @@ class DiskInfo:
     def mounted(self):
         return self._mounted
 
+    @property
+    def temperature(self):
+        return self._temperature
+
+
 def get_disk_info(mountpoint='/'):
     from psutil import disk_usage
     disk_info = disk_usage(mountpoint)
@@ -134,64 +144,93 @@ def get_disk_info(mountpoint='/'):
     )
 
 def get_disks():
-    import subprocess
-    disks = []
-    output = subprocess.check_output(["lsblk", "-o", "NAME,TYPE", "-n", "-l"]).decode().strip().split('\n')
-    
-    for line in output:
-        disk_name, disk_type = line.split()
-        if disk_type == "disk":
-            disks.append(disk_name)
-    return disks
+    from pyudev import Context
+
+    context = Context()
+    all_disks = set()
+
+    for device in context.list_devices(subsystem='block', DEVTYPE='disk'):
+        device_node = device.device_node
+
+        # 排除RAM磁盘和loop设备
+        if 'ram' not in device_node and 'loop' not in device_node:
+            all_disks.add(device_node)
+
+    return list(all_disks)
 
 def get_disk_total(disk):
     import subprocess
     from .utils import human2bytes
+
+    if "/dev/" in disk:
+        disk = disk.split("/dev/")[1]
     total = subprocess.check_output(f"lsblk -o NAME,TYPE,SIZE -n -l | grep {disk} | grep disk | awk '{{print $3}}'", shell=True).decode().strip()
     total = human2bytes(total)
     return total
 
-def get_disks_info():
-    from psutil import disk_usage
+def is_disk_mounted(disk):
+    from psutil import disk_partitions
+    partitions = disk_partitions(all=False)
+
+    for partition in partitions:
+        if disk in partition.device:
+            return True
+
+    return False
+
+def get_disk_temperature(disk):
     import subprocess
+    try:
+        output = subprocess.check_output(['smartctl', '-a', disk])
+        lines = output.decode('utf-8').split('\n')
+        
+        for line in lines:
+            if 'Temperature_Celsius' in line:
+                temperature = line.split()[9]
+                return temperature
+    except subprocess.CalledProcessError as e:
+        # print(f"Error: {e}")
+        return None
+
+def get_disks_info(disks=None):
+    from psutil import disk_usage, disk_partitions
     disk_info = {}
-    disks = get_disks()
+    if disks is None:
+        disks = get_disks()
     
     for disk in disks:
-        mountpoints = subprocess.check_output(f"lsblk -o NAME,TYPE,MOUNTPOINTS -n -l |grep {disk}|grep part|awk '{{print $3}}'", shell=True).decode().strip().split('\n')
+        mounted = is_disk_mounted(disk)
+        print(f"Getting disk information for {disk}...")
         
         try:
             total = 0.0
             used = 0.0
             free = 0.0
             percent = 0.0
-            if len(mountpoints) == 0 or mountpoints[0] == '':
+            # temperature = get_disk_temperature(disk)
+            if not mounted:
                 total = get_disk_total(disk)
-                disk_info[disk] = DiskInfo(
-                    total=total,
-                    path=disk,
-                    mounted=False
-                )
             else:
-                for mountpoint in mountpoints:
-                    if mountpoint == '':
-                        continue
-                    usage = disk_usage(mountpoint)
-                    total += usage.total
-                    used += usage.used
-                    free += usage.free
+                partitions = disk_partitions(all=False)
+                for partition in partitions:
+                    if disk in partition.device:
+                        usage = disk_usage(partition.mountpoint)
+                        total += usage.total
+                        used += usage.used
+                        free += usage.free
                 if total == 0.0:
                     continue
                 percent = used / total * 100
                 percent = round(percent, 2)
-                disk_info[disk] = DiskInfo(
-                    total=total,
-                    used=used,
-                    free=free,
-                    percent=percent,
-                    path=disk,
-                    mounted=True
-                )
+            disk_info[disk] = DiskInfo(
+                total=total,
+                used=used,
+                free=free,
+                percent=percent,
+                path=disk,
+                mounted=mounted,
+                temperature=temperature
+            )
         except Exception as e:
             print(f"Failed to get disk information for {disk}: {str(e)}")
     

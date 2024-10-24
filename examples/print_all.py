@@ -8,13 +8,13 @@ def main():
     print(f'CPU count: {get_cpu_count()}')
     print(f'Memory info: {get_memory_info()}')
     print(f'Disk info: {get_disk_info()}')
+    print(f'Disks: {get_disks()}')
     print(f'Disk info(per disk): {get_disks_info()}')
     print(f'Boot time: {get_boot_time()}')
     print(f'IP addresses: {get_ips()}')
     print(f'MAC addresses: {get_macs()}')
     print(f'Network connection type: {get_network_connection_type()}')
     print(f'Network speed: {get_network_speed()}')
-
 
 if __name__ == '__main__':
     main()
