@@ -192,7 +192,7 @@ def get_disk_temperature(disk):
         # print(f"Error: {e}")
         return None
 
-def get_disks_info(disks=None):
+def get_disks_info(disks=None, temperature=False):
     from psutil import disk_usage, disk_partitions
     disk_info = {}
     if disks is None:
@@ -200,14 +200,15 @@ def get_disks_info(disks=None):
     
     for disk in disks:
         mounted = is_disk_mounted(disk)
-        print(f"Getting disk information for {disk}...")
         
         try:
             total = 0.0
             used = 0.0
             free = 0.0
             percent = 0.0
-            # temperature = get_disk_temperature(disk)
+            temperature = None
+            if temperature:
+                temperature = get_disk_temperature(disk)
             if not mounted:
                 total = get_disk_total(disk)
             else:
