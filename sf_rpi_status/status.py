@@ -42,11 +42,11 @@ def get_cpu_count():
 
 class MemoryInfo:
     def __init__(self, data):
-        self._total = data.total
-        self._available = data.available
-        self._percent = data.percent
-        self._used = data.used
-        self._free = data.free
+        self._total = float(data.total)
+        self._available = float(data.available)
+        self._percent = float(data.percent)
+        self._used = float(data.used)
+        self._free = float(data.free)
 
     def __repr__(self):
         return f'MemoryInfo(total: {self.total} B, available: {self.available} B, percent: {self.percent}%, used: {self.used} B, free: {self.free} B)'
@@ -80,13 +80,13 @@ def get_memory_info():
 
 class DiskInfo:
     def __init__(self, total=0.0, used=0.0, free=0.0, percent=0.0, temperature=None, path=None, mounted=False):
-        self._total = total
-        self._used = used
-        self._free = free
-        self._percent = percent
+        self._total = float(total)
+        self._used = float(used)
+        self._free = float(free)
+        self._percent = float(percent)
         self._path = path
         self._mounted = mounted
-        self._temperature = temperature
+        self._temperature = float(temperature)
     
     def __repr__(self):
         return self.__str__()
