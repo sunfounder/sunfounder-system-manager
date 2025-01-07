@@ -213,12 +213,18 @@ def get_disks_info(disks=None, temperature=False):
                 total = get_disk_total(disk)
             else:
                 partitions = disk_partitions(all=False)
+                # Get all mount points for the disk, put in a directory to prevent duplicates
+                mount_points = {}
                 for partition in partitions:
+                    device = partition.device
                     if disk in partition.device:
-                        usage = disk_usage(partition.mountpoint)
-                        total += usage.total
-                        used += usage.used
-                        free += usage.free
+                        path = partition.mountpoint
+                        mount_points[device] = path
+                for device, path in mount_points.items():
+                    usage = disk_usage(path)
+                    total += usage.total
+                    used += usage.used
+                    free += usage.free
                 if total == 0:
                     continue
                 percent = used / total * 100
