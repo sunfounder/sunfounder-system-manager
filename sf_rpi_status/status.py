@@ -1,8 +1,24 @@
 
 
+# def get_cpu_temperature():
+#     from psutil import sensors_temperatures
+#     return sensors_temperatures()['cpu_thermal'][0].current
+
 def get_cpu_temperature():
-    from psutil import sensors_temperatures
-    return sensors_temperatures()['cpu_thermal'][0].current
+    from .utils import run_command
+    try:
+        result = run_command('cat /sys/class/thermal/thermal_zone0/temp')
+        return float(result) / 1000
+    except:
+        return None
+
+def get_gpu_temperature():
+    from .utils import run_command
+    try:
+        result = run_command('vcgencmd measure_temp')
+        return float(result.split('=')[1].split("'")[0])
+    except:
+        return None
 
 def get_cpu_percent(percpu=False):
     from psutil import cpu_percent

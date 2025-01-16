@@ -1,6 +1,7 @@
 from .version import __version__
 from .status import \
     get_cpu_temperature, \
+    get_gpu_temperature, \
     get_cpu_percent, \
     get_cpu_freq, \
     get_cpu_count, \
