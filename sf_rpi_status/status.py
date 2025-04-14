@@ -180,8 +180,19 @@ def get_disk_total(disk):
 
     if "/dev/" in disk:
         disk = disk.split("/dev/")[1]
-    total = subprocess.check_output(f"lsblk -o NAME,TYPE,SIZE -n -l | grep {disk} | grep disk | awk '{{print $3}}'", shell=True).decode().strip()
-    total = human2bytes(total)
+    cmd = f"lsblk -o NAME,TYPE,SIZE -n -l"
+    result = subprocess.check_output(cmd, shell=True).decode().strip()
+    lines = result.split("\n")
+    total = None
+    for line in lines:
+        values = line.split()
+        name = values[0]
+        size = values[2]
+        if name == disk:
+            total = human2bytes(size)
+            break
+    else:
+        raise Exception(f"Failed to get disk total for {disk}")
     return total
 
 def is_disk_mounted(disk):
