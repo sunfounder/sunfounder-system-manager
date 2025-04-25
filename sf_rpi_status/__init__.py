@@ -20,7 +20,8 @@ from .status import \
     CPUFreq, \
     NetworkSpeed, \
     MemoryInfo, \
-    DiskInfo
+    DiskInfo, \
+    PWMFan
 
 
 def main():

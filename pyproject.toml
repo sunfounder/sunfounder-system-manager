@@ -33,4 +33,4 @@ packages = ["sf_rpi_status"]
 sf_rpi_status = "sf_rpi_status:main"
 
 [tool.setuptools.dynamic]
-version = {attr = "sf_rpi_status.__version__"}
+version = {attr = "sf_rpi_status.version.__version__"}

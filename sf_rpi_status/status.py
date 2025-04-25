@@ -1,11 +1,12 @@
-
+from .utils import run_command
+import subprocess
+import os
 
 # def get_cpu_temperature():
 #     from psutil import sensors_temperatures
 #     return sensors_temperatures()['cpu_thermal'][0].current
 
 def get_cpu_temperature():
-    from .utils import run_command
     try:
         result = run_command('cat /sys/class/thermal/thermal_zone0/temp')
         return float(result) / 1000
@@ -13,7 +14,6 @@ def get_cpu_temperature():
         return None
 
 def get_gpu_temperature():
-    from .utils import run_command
     try:
         result = run_command('vcgencmd measure_temp')
         return float(result.split('=')[1].split("'")[0])
@@ -175,7 +175,6 @@ def get_disks():
     return list(all_disks)
 
 def get_disk_total(disk):
-    import subprocess
     from .utils import human2bytes
 
     if "/dev/" in disk:
@@ -206,7 +205,6 @@ def is_disk_mounted(disk):
     return False
 
 def get_disk_temperature(disk):
-    import subprocess
     try:
         output = subprocess.check_output(['smartctl', '-a', disk])
         lines = output.decode('utf-8').split('\n')
@@ -404,3 +402,100 @@ def shutdown():
     else:
         from os import system
         system('sudo shutdown -h now')
+
+class PWMFan():
+    # Systems that need to replace system pwm fan control
+    # Please use all lowercase
+    TEMP_CONTROL_INTERVENE_OS = [
+        
+    ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not PWMFan.pwm_fan_supported():
+            print("PWM Fan is not supported")
+            self._is_ready = False
+            return
+
+        # Check if system support pwm fan control
+        os_id = run_command("lsb_release -a |grep ID | awk -F ':' '{print $2}'")
+        os_id = os_id.strip()
+        os_code_name = run_command("lsb_release -a |grep Codename | awk -F ':' '{print $2}'")
+        os_code_name = os_code_name.strip()
+
+        self.enable_control = False
+        if os_id.lower() in self.TEMP_CONTROL_INTERVENE_OS or os_code_name.lower() in self.TEMP_CONTROL_INTERVENE_OS:
+            print("System do not support pwm fan control")
+            self.enable_control = True
+        self._is_ready = True
+
+    @staticmethod
+    def pwm_fan_supported():
+        from os import path
+        return path.exists('/sys/class/thermal/cooling_device0/cur_state') and path.exists('/sys/devices/platform/cooling_fan')
+
+    def check_ready(func):
+        def wrapper(self, *args, **kwargs):
+            if not self._is_ready:
+                return None
+            return func(self, *args, **kwargs)
+        return wrapper
+
+    @check_ready
+    def is_supported(self):
+        return not self.enable_control
+
+    check_ready
+    def get_state(self):
+        path = '/sys/class/thermal/cooling_device0/cur_state'
+        try:
+            with open(path, 'r') as f:
+                cur_state = int(f.read())
+            return cur_state
+        except Exception as e:
+            print(f'read pwm fan state error: {e}')
+            return 0
+
+    @check_ready
+    def set_state(self, level: int):
+        '''
+        level: 0 ~ 3
+        '''
+        if (isinstance(level, int)):
+            if level > 3:
+                level = 3
+            elif level < 0:
+                level = 0
+
+            cmd = f"echo '{level}' | sudo tee -a /sys/class/thermal/cooling_device0/cur_state"
+            result = subprocess.check_output(cmd, shell=True)
+
+            return result
+
+    @check_ready
+    def get_speed(self):
+        '''
+        path =  '/sys/devices/platform/cooling_fan/hwmon/*/fan1_input'
+        '''
+        dir = '/sys/devices/platform/cooling_fan/hwmon/'
+        secondary_dir = os.listdir(dir)
+        path = f'{dir}/{secondary_dir[0]}/fan1_input'
+
+        os.listdir
+        try:
+            with open(path, 'r') as f:
+                speed = int(f.read())
+            return speed
+        except Exception as e:
+            print(f'read fan1 speed error: {e}')
+            return 0
+
+    @check_ready
+    def off(self):
+        if not self.is_supported():
+            self.set_state(0)
+
+    @check_ready
+    def close(self):
+        self.off()
+        self._is_ready = False
