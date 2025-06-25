@@ -459,11 +459,11 @@ class PWMFan():
     @check_ready
     def set_state(self, level: int):
         '''
-        level: 0 ~ 3
+        level: 0 ~ 4
         '''
         if (isinstance(level, int)):
-            if level > 3:
-                level = 3
+            if level > 4:
+                level = 4
             elif level < 0:
                 level = 0
 
