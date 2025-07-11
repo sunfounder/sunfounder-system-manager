@@ -95,7 +95,7 @@ def get_memory_info():
     return MemoryInfo(virtual_memory())
 
 class DiskInfo:
-    def __init__(self, total=0, used=0, free=0, percent=0.0, temperature=None, path=None, mounted=False):
+    def __init__(self, total=0, used=0, free=0, percent=0.0, type='unknown', temperature=None, path=None, mounted=False):
         self._total = total
         self._used = used
         self._free = free
@@ -103,6 +103,7 @@ class DiskInfo:
         self._path = path
         self._mounted = mounted
         self._temperature = temperature
+        self._type = type
     
     def __repr__(self):
         return self.__str__()
@@ -111,9 +112,9 @@ class DiskInfo:
         from psutil._common import bytes2human
         string = ""
         if self.mounted:
-            string = f'Disk {self._path}: total: {bytes2human(self.total)}B, used: {bytes2human(self.used)}B, free: {bytes2human(self.free)}B, percent: {self.percent}%'
+            string = f'Disk {self._path}: total: {bytes2human(self.total)}B, used: {bytes2human(self.used)}B, free: {bytes2human(self.free)}B, percent: {self.percent}%, type: {self.type}'
         else:
-            string = f'Disk {self._path} not mounted, total: {bytes2human(self.total)}B'
+            string = f'Disk {self._path} not mounted, total: {bytes2human(self.total)}B, type: {self.type}'
         if self.temperature is not None:
             string += f', temperature: {self.temperature}°C'
         return string
@@ -145,6 +146,10 @@ class DiskInfo:
     @property
     def temperature(self):
         return self._temperature
+
+    @property
+    def type(self):
+        return self._type
 
 
 def get_disk_info(mountpoint='/'):
@@ -217,6 +222,30 @@ def get_disk_temperature(disk):
         # print(f"Error: {e}")
         return None
 
+def get_disk_type(disk_path: str) -> str:
+    disk = os.path.basename(disk_path)
+    sys_block_path = f'/sys/class/block/{disk}'
+
+    if disk.startswith('nvme'):
+        return 'nvme'
+
+    elif disk.startswith('mmcblk'):
+        return 'sd'
+
+    elif disk.startswith('md'):
+        return 'raid'
+
+    elif disk.startswith('sd'):
+        bus_path = f'{sys_block_path}/device/../../../bus'
+        if os.path.exists(bus_path):
+            bus_type = os.path.basename(os.path.realpath(bus_path))
+            if bus_type == 'usb':
+                return 'usb'
+            else:
+                return 'hd'
+        else:
+            return 'hd'
+
 def get_disks_info(disks=None, temperature=False):
     from psutil import disk_usage, disk_partitions
     disk_info = {}
@@ -225,6 +254,7 @@ def get_disks_info(disks=None, temperature=False):
     
     for disk in disks:
         mounted = is_disk_mounted(disk)
+        disk_type = get_disk_type(disk)  # 获取磁盘类型
         
         try:
             total = 0
@@ -261,7 +291,8 @@ def get_disks_info(disks=None, temperature=False):
                 percent=percent,
                 path=disk,
                 mounted=mounted,
-                temperature=temperature
+                temperature=temperature,
+                type=disk_type,
             )
         except Exception as e:
             print(f"Failed to get disk information for {disk}: {str(e)}")

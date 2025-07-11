@@ -7,6 +7,7 @@ from .status import \
     get_cpu_count, \
     get_memory_info, \
     get_disks, \
+    get_disk_type, \
     is_disk_mounted, \
     get_disk_info, \
     get_disk_temperature, \
