@@ -30,7 +30,8 @@ def set(endpoint, data=None):
     init()
     import requests
     url = f"{base_url}{endpoint}"
-    requests.post(url, headers=headers)
+    r = requests.post(url, headers=headers, json=data)
+    print(r)
 
 def get_ips():
     ips = {}
@@ -69,3 +70,14 @@ def shutdown():
 def reboot():
     '''reboot homeassistant host'''
     set("host/reboot")
+
+def restart_addon(addon_name=None):
+    '''
+    restart homeassistant addon
+    
+    Args:
+        addon_name (str, optional): addon name. Defaults to None.
+    '''
+    if addon_name is None:
+        addon_name = os.environ['HOSTNAME'].replace('-', '_')
+    set(f"addons/{addon_name}/restart")
