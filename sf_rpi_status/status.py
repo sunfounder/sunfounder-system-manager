@@ -432,7 +432,18 @@ def shutdown():
         ha_api.shutdown()
     else:
         from os import system
-        system('sudo shutdown -h now')
+        system('shutdown -h now')
+
+def restart_service():
+    from . import systemd_detector as systemd_detector
+    from . import ha_api
+    if ha_api.is_homeassistant_addon():
+        ha_api.restart_addon()
+    elif systemd_detector.is_running_as_systemd_service():
+        service_name = systemd_detector.get_systemd_service_name()
+        if service_name:
+            from os import system
+            system(f'systemctl restart {service_name}')
 
 class PWMFan():
     # Systems that need to replace system pwm fan control
