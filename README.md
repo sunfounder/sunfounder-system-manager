@@ -1,10 +1,11 @@
-# SF RPi Status
+# SunFounder System Manager
 
-SunFounder Raspberry Pi Status is a tool to get the status of your Raspberry Pi. It has cli commands functions
+SunFounder System Manager is a tool to get the status of your Raspberry Pi. It has cli commands functions.
 
-- [SF RPi Status](#sf-rpi-status)
+- [SunFounder System Manager](#sunfounder-system-manager)
   - [Installation](#installation)
   - [Usage](#usage)
+  - [Debug](#debug)
   - [About SunFounder](#about-sunfounder)
   - [Contact us](#contact-us)
 
@@ -40,6 +41,14 @@ sf_rpi_status --cpu
 sf_rpi_status --all
 # See more options
 sf_rpi_status --help
+```
+
+## Debug
+
+```bash
+cd ~/sunfounder-service-node && sudo pip3 install . --break --no-build-isolation
+cd ~/sunfounder-system-manager && sudo pip3 install . --break --no-build-isolation --no-deps
+sudo sunfounder-system-manager
 ```
 
 ## About SunFounder

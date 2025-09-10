@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sf_rpi_status"
+name = "sunfounder-system-manager"
 authors = [
   { name="SunFounder", email="service@sunfounder.com" },
 ]
@@ -18,20 +18,19 @@ classifiers = [
 dynamic = ["version"]
 
 dependencies = [
-  'requests',
-  'psutil',
-  'pyudev',
+  "sf_rpi_status @ git+https://github.com/sunfounder/sf_rpi_status.git",
+  "sunfounder_service_node @ git+https://github.com/sunfounder/sunfounder_service_node.git",
 ]
 
 [tool.setuptools]
-packages = ["sf_rpi_status"]
+packages = ["sunfounder_system_manager"]
 
 [project.urls]
-"Homepage" = "https://github.com/sunfounder/sf_rpi_status"
-"Bug Tracker" = "https://github.com/sunfounder/sf_rpi_status/issues"
+"Homepage" = "https://github.com/sunfounder/sunfounder-system-manager"
+"Bug Tracker" = "https://github.com/sunfounder/sunfounder-system-manager/issues"
 
 [project.scripts]
-sf_rpi_status = "sf_rpi_status:main"
+sunfounder-system-manager = "sunfounder_system_manager.main:main"
 
 [tool.setuptools.dynamic]
-version = {attr = "sf_rpi_status.version.__version__"}
+version = {attr = "sunfounder_system.version.__version__"}
