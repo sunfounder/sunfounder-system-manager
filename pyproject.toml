@@ -19,7 +19,7 @@ dynamic = ["version"]
 
 dependencies = [
   "sf_rpi_status @ git+https://github.com/sunfounder/sf_rpi_status.git",
-  "sunfounder_service_node @ git+https://github.com/sunfounder/sunfounder_service_node.git",
+  "sunfounder_service_node @ git+https://github.com/sunfounder/sunfounder-service-node.git",
 ]
 
 [tool.setuptools]
@@ -33,4 +33,4 @@ packages = ["sunfounder_system_manager"]
 sunfounder-system-manager = "sunfounder_system_manager.main:main"
 
 [tool.setuptools.dynamic]
-version = {attr = "sunfounder_system.version.__version__"}
+version = {attr = "sunfounder_system_manager.version.__version__"}
